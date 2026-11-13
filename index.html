@@ -51,6 +51,8 @@ main{padding:16px;max-width:1600px;margin:0 auto}
 .empty{color:var(--muted);text-align:center;padding:40px;grid-column:1/-1}
 .card img.logo{object-fit:contain;padding:18px;background:radial-gradient(circle,#3a4458,#202736)}
 .live{background:#dc2626;color:#fff;font-weight:700;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:.05em}
+.grid .card.app.big{grid-column:span 2}
+@media(max-width:520px){.grid .card.app.big{grid-column:1/-1}}
 .grid.apps{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
 .card.app{display:flex;flex-direction:column;gap:8px;padding:18px;text-decoration:none;color:var(--text);background:linear-gradient(160deg,var(--c),var(--panel) 85%)}
 .card.app .an{font-size:20px;font-weight:700}
@@ -107,7 +109,7 @@ const APPS=[
  {n:'YouTube Películas',d:'YouTube tiene algunas películas gratis con anuncios. Muchas son de pago: fijate que diga "Gratis".',u:'https://www.youtube.com/feed/storefront',c:'#b00000'}
 ];
 const URUGUAY=[
- {n:'Canal 10 en vivo',d:'Señal oficial del Canal 10 las 24 horas, gratis y sin registrarte.',u:'https://www.canal10.com.uy/contenidos/vivo.html',c:'#0047ab'},
+ {n:'Canal 10 en vivo',d:'Señal oficial del Canal 10 las 24 horas. Gratis; te pide crear una cuenta gratis la primera vez.',u:'https://www.canal10.com.uy/contenidos/vivo.html',c:'#0047ab'},
  {n:'Canal 5 y radios públicas',d:'Portal de los medios públicos: Canal 5, Radio Uruguay, Babel, Clásica y Cultura en vivo.',u:'https://mediospublicos.uy',c:'#0b6e4f'},
  {n:'TV Ciudad',d:'Canal público de Montevideo: programas, cultura y eventos.',u:'https://www.tvciudad.uy',c:'#6d28d9'},
  {n:'Canal 4 (programas)',d:'El 4 no transmite en vivo gratis por internet. Acá están sus programas y Telenoche en YouTube.',u:'https://www.youtube.com/channel/UCp6X5jzfmwbOeclRArOi18g',c:'#c2410c'},
@@ -121,7 +123,7 @@ const FUTBOL=[
  {n:'Pluto TV Deportes',d:'Canales de deportes gratis, con programas y resúmenes.',u:'https://pluto.tv/latam/live-tv',c:'#2b0b5e'}
 ];
 const SECTIONS=[
- {id:'tv',name:'📡 TV en vivo',tv:1,sq:1,info:'Canales oficiales que transmiten gratis por internet. Los canales de Sony One pasan películas todo el día, en francés.'},
+ {id:'tv',name:'📡 TV en vivo',tv:1,sq:1,info:'Todo se ve acá adentro. Para películas en español entrá a Pluto TV; los canales de Sony One pasan películas en francés.'},
  {id:'uruguay',name:'📺 Canales de Uruguay',links:'URUGUAY',info:'Canales uruguayos con señal oficial gratis. Para ver el 4, 5, 10, 12 y TV Ciudad sin internet ni cable: antena digital (TDA), que es gratis.'},
  {id:'futbol',name:'⚽ Fútbol',links:'FUTBOL',info:'El Campeonato Uruguayo hoy es pago (DSports / Disney+). Lo gratis y legal: la Selección en TV abierta, AUF TV y deportes en canales gratis.'},
  {id:'apps',name:'🍿 Cine gratis (apps)',links:'APPS',info:'Para películas más nuevas: plataformas legales y gratis que se pagan con publicidad. Se abren en su propia página o app.'},
@@ -176,15 +178,31 @@ function match(t){return !query||t.toLowerCase().includes(query.toLowerCase())}
 function loadTV(){
   const list=TV.filter(c=>match(c.n+' '+c.g));
   if(!list.length){grid.innerHTML='<div class="empty">No hay canales con ese nombre.</div>';return}
-  grid.innerHTML=list.map(c=>`<div class="card" tabindex="0" data-live="${esc(c.u)}" data-t="${esc(c.n)}" data-img="${esc(c.logo)}">
+  const top=query?'':`<a class="card app big" href="https://pluto.tv/latam/live-tv" target="_blank" rel="noopener" style="--c:#3a1078" data-embed="https://pluto.tv/latam/live-tv" data-t="Pluto TV">
+    <div class="an">🍿 Pluto TV</div><div class="s">Cine en español todo el día (acción, comedia, terror, estrellas), novelas, series e infantiles. Gratis, con anuncios.</div><div class="go">▶ Ver acá</div></a>
+    <a class="card app big" href="https://www.canal10.com.uy/contenidos/vivo.html" target="_blank" rel="noopener" style="--c:#0047ab" data-embed="https://www.canal10.com.uy/contenidos/vivo.html" data-t="Canal 10 en vivo">
+    <div class="an">📺 Canal 10</div><div class="s">Señal en vivo de Uruguay. La primera vez te pide crear una cuenta gratis.</div><div class="go">▶ Ver acá</div></a>`;
+  grid.innerHTML=top+list.map(c=>`<div class="card" tabindex="0" data-live="${esc(c.u)}" data-t="${esc(c.n)}" data-img="${esc(c.logo)}">
     <img class="logo" loading="lazy" src="${esc(c.logo)}" alt="" onerror="this.src=FALLBACK_IMG">
     <div class="t">${esc(c.n)}</div><div class="s"><span class="live">EN VIVO</span> ${esc(c.g)}</div></div>`).join('');
 }
+const EMBED=/(pluto\.tv\/latam\/live-tv|canal10\.com\.uy|auf\.tv)/;
 function loadApps(){
   grid.className='grid apps';
-  grid.innerHTML=({APPS,URUGUAY,FUTBOL})[cur.links].filter(a=>match(a.n+' '+a.d)).map(a=>`<a class="card app" href="${esc(a.u)}" target="_blank" rel="noopener" style="--c:${a.c}">
-    <div class="an">${esc(a.n)}</div><div class="s">${esc(a.d)}</div><div class="go">Abrir ↗</div></a>`).join('');
+  grid.innerHTML=({APPS,URUGUAY,FUTBOL})[cur.links].filter(a=>match(a.n+' '+a.d)).map(a=>{
+    const inside=EMBED.test(a.u);
+    return `<a class="card app" href="${esc(a.u)}" target="_blank" rel="noopener" style="--c:${a.c}" ${inside?`data-embed="${esc(a.u)}" data-t="${esc(a.n)}"`:''}>
+    <div class="an">${esc(a.n)}</div><div class="s">${esc(a.d)}</div><div class="go">${inside?'▶ Ver acá':'Se abre aparte ↗'}</div></a>`}).join('');
 }
+function openEmbed(a){
+  lastCard=null;
+  $('ptitle').textContent=a.dataset.t;
+  $('pfav').innerHTML=`<a class="chip" href="${esc(a.dataset.embed)}" target="_blank" rel="noopener" style="text-decoration:none">Abrir aparte ↗</a>`;
+  $('pbody').innerHTML=`<iframe src="${esc(a.dataset.embed)}" allow="autoplay; fullscreen; encrypted-media" allowfullscreen referrerpolicy="origin"></iframe>
+    <div class="hint">Puede tardar unos 15 segundos en cargar. Si no carga, tocá "Abrir aparte".</div>`;
+  $('player').classList.add('open');$('pclose').focus();
+}
+grid.addEventListener('click',e=>{const a=e.target.closest('a.card.app[data-embed]');if(a){e.preventDefault();openEmbed(a)}});
 function getFav(){try{return JSON.parse(localStorage.getItem('cml-fav')||'[]')}catch(e){return []}}
 function setFav(f){try{localStorage.setItem('cml-fav',JSON.stringify(f))}catch(e){}}
 function favKey(c){return c.dataset.id||c.dataset.live||c.dataset.radio}
@@ -321,6 +339,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'||e.key==='Backspace'&&document.activeElement.tagName!=='INPUT'){
     if($('player').classList.contains('open')){e.preventDefault();closePlayer();return}}
   if(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='checkbox')return;
+  if(e.key==='Enter'&&document.activeElement.dataset.embed){e.preventDefault();openEmbed(document.activeElement);return}
   if(e.key==='Enter'&&document.activeElement.classList.contains('card')&&!document.activeElement.classList.contains('app')){openCard(document.activeElement);return}
   const dirs={ArrowRight:[1,0],ArrowLeft:[-1,0],ArrowDown:[0,1],ArrowUp:[0,-1]};
   const d=dirs[e.key];if(!d)return;
