@@ -121,7 +121,7 @@ async function load(reset){
 }
 
 async function loadArchive(reset){
-  let q=cur.q+' AND mediatype:'+(cur.sq?'audio':'movies')+' AND -access-restricted-item:true';
+  let q=cur.q+(cur.sq?' AND mediatype:(audio OR etree) AND format:("VBR MP3" OR "128Kbps MP3")':' AND mediatype:movies AND format:(MPEG4 OR "h.264")')+' AND -access-restricted-item:true';
   if(query)q+=` AND (${query})`;
   if($('es').checked)q+=' AND language:(spa OR Spanish OR español OR Español)';
   const rows=48;
