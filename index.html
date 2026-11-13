@@ -47,7 +47,17 @@ main{padding:16px;max-width:1600px;margin:0 auto}
 #radiobar.open{display:flex}
 #radiobar img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#333}
 #radiobar .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
-.empty{color:var(--muted);text-align:center;padding:40px}
+.empty{color:var(--muted);text-align:center;padding:40px;grid-column:1/-1}
+.card img.logo{object-fit:contain;padding:18px;background:radial-gradient(circle,#3a4458,#202736)}
+.live{background:#dc2626;color:#fff;font-weight:700;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:.05em}
+.grid.apps{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.card.app{display:flex;flex-direction:column;gap:8px;padding:18px;text-decoration:none;color:var(--text);background:linear-gradient(160deg,var(--c),var(--panel) 85%)}
+.card.app .an{font-size:20px;font-weight:700}
+.card.app .s{padding:0;font-size:13px;color:#d5dbe6;flex:1}
+.card.app .go{font-weight:600;color:var(--focus)}
+.hint{color:var(--muted);text-align:center}
+#favbtn.on{background:#a16207;border-color:#a16207}
+#player .bar #pfav{margin-left:auto}
 footer{color:var(--muted);font-size:12px;text-align:center;padding:30px 16px 90px}
 footer a{color:var(--muted)}
 </style>
@@ -70,21 +80,41 @@ footer a{color:var(--muted)}
   <button class="more" id="more" hidden>Cargar más</button>
 </main>
 <div id="player" role="dialog" aria-modal="true">
-  <div class="bar"><h2 id="ptitle"></h2><button id="pclose">✕ Cerrar</button></div>
+  <div class="bar"><h2 id="ptitle"></h2><span id="pfav"></span><button id="pclose">✕ Cerrar</button></div>
   <div id="pbody"></div>
 </div>
 <div id="radiobar">
   <img id="rimg" alt=""><div class="n" id="rname"></div>
-  <button id="rtoggle">⏸ Pausa</button><button id="rstop">✕</button>
+  <span id="rfav"></span><button id="rtoggle">⏸ Pausa</button><button id="rstop">✕</button>
   <audio id="raudio"></audio>
 </div>
-<footer>Todo el contenido es legal y gratuito: dominio público y licencias libres de
+<footer>Todo el contenido es legal y gratuito: canales oficiales que transmiten abierto por internet, plataformas gratuitas con publicidad, y dominio público y licencias libres de
 <a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a>,
 <a href="https://librivox.org" target="_blank" rel="noopener">LibriVox</a> y radios de
 <a href="https://www.radio-browser.info" target="_blank" rel="noopener">Radio Browser</a>.</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
 <script>
+const TV=[{"n": "Sony One Acci\u00f3n (franc\u00e9s)", "g": "Pel\u00edculas", "logo": "https://i.imgur.com/pXsZEsR.png", "u": "https://5098a8b860504a3690fd2e7c0a18d68f.mediatailor.us-west-2.amazonaws.com/v1/master/ba62fe743df0fe93366eba3a257d792884136c7f/LINEAR-817-FR-SONYONEHITSACTION-LG_FR/playlist.m3u8"}, {"n": "Sony One Comedia (franc\u00e9s)", "g": "Pel\u00edculas", "logo": "https://i.imgur.com/8sHuxxS.png", "u": "https://7aa9671895264ec9a384dfed1b992171.mediatailor.us-west-2.amazonaws.com/v1/master/ba62fe743df0fe93366eba3a257d792884136c7f/LINEAR-818-FR-SONYONEHITSCOMDIE-LG_FR/playlist.m3u8"}, {"n": "Sony One Pel\u00edculas (franc\u00e9s)", "g": "Pel\u00edculas", "logo": "https://i.imgur.com/RO4AM4b.png", "u": "https://49d735318d6b4c30a24a7997ea594e1b.mediatailor.us-west-2.amazonaws.com/v1/master/ba62fe743df0fe93366eba3a257d792884136c7f/LINEAR-820-FR-SONYONEFAVORIS-LG_FR/playlist.m3u8"}, {"n": "Sony One: The Blacklist (franc\u00e9s)", "g": "Series", "logo": "https://i.imgur.com/uJC8rXr.png", "u": "https://06cb85ad6ccb4a6b97f561e62d16ad3f.mediatailor.us-west-2.amazonaws.com/v1/master/ba62fe743df0fe93366eba3a257d792884136c7f/LINEAR-822-FR-SONYONETHEBLACKLIST-LG_FR/playlist.m3u8"}, {"n": "TVE Star (series espa\u00f1olas)", "g": "Series", "logo": "https://i.ibb.co/j98NY8Mr/starcolor.png", "u": "https://rtvelivestream-rtveplayplus.rtve.es/rtvesec/int/star_main_1080.m3u8"}, {"n": "Red Bull TV", "g": "Deportes y aventura", "logo": "https://images.pluto.tv/channels/5e7cb84a172a0f0007da69e4/colorLogoPNG.png", "u": "https://886bd3fbc782459f8de7555d32d7e9ce.mediatailor.us-west-2.amazonaws.com/v1/master/ba62fe743df0fe93366eba3a257d792884136c7f/LINEAR-957-WORBLATAMESFAST-WHALETVPLUS/957/whaletvplus/hls/master/playlist.m3u8"}, {"n": "Documentary+ (ingl\u00e9s)", "g": "Documentales", "logo": "https://i.imgur.com/x57klfS.png", "u": "https://ef79b15c8c7c46c7a9de9d33001dbd07.mediatailor.us-west-2.amazonaws.com/v1/master/ba62fe743df0fe93366eba3a257d792884136c7f/LINEAR-859-DOCUMENTARYPLUS-DOCUMENTARYPLUS/mt/documentaryplus/859/hls/master/playlist.m3u8"}, {"n": "Al Jazeera (ingl\u00e9s)", "g": "Noticias", "logo": "https://i.imgur.com/7bRVpnu.png", "u": "https://live-hls-apps-aje-fa.getaj.net/AJE/index.m3u8"}, {"n": "DW Espa\u00f1ol", "g": "Noticias", "logo": "https://i.imgur.com/8MRNFb9.png", "u": "https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/master.m3u8"}, {"n": "France 24 Espa\u00f1ol", "g": "Noticias", "logo": "https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_FRANCE_24/images/LOGO_HD/image.png", "u": "https://live.france24.com/hls/live/2037220-b/F24_ES_HI_HLS/master_5000.m3u8"}, {"n": "teleSUR", "g": "Noticias", "logo": "https://i.imgur.com/P50VjRX.png", "u": "https://mblesmain01.telesur.ultrabase.net/mbliveMain/hd/playlist.m3u8"}, {"n": "Canal Once M\u00e9xico", "g": "Cultura", "logo": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Canal_Once_logo_2025.png", "u": "https://vivo.canaloncelive.tv/securepkgr3/oncemexico/playlist.m3u8"}, {"n": "La 2 (RTVE Espa\u00f1a)", "g": "Cultura", "logo": "https://i.ibb.co/rfsr9PSh/La-2.png", "u": "https://rtvelivestream.rtve.es/rtvesec/la2/la2_main.m3u8"}, {"n": "NHK World (japon\u00e9s)", "g": "Internacional", "logo": "https://i.imgur.com/4ESi2La.png", "u": "https://media-tyo.hls.nhkworld.jp/hls/wp/live/master.m3u8"}];
+const APPS=[
+ {n:'Pluto TV',d:'Cientos de canales gratis 24 h: cine de acción, comedia, terror, novelas, series, infantiles y más. Es gratis y no pide cuenta.',u:'https://pluto.tv/latam/live-tv',c:'#2b0b5e'},
+ {n:'Pluto TV a la carta',d:'Películas y series para ver cuando quieras, gratis con anuncios.',u:'https://pluto.tv/latam/on-demand',c:'#3a1078'},
+ {n:'Plex',d:'Miles de películas y series gratis con anuncios, muchas dobladas al español. Pide una cuenta gratis.',u:'https://watch.plex.tv/es/movies',c:'#1f1f1f'},
+ {n:'ViX',d:'Novelas, series y películas en español, gratis con anuncios. Puede no estar disponible en todos los países.',u:'https://vix.com',c:'#e4572e'},
+ {n:'Filmzie',d:'Cine independiente y películas premiadas, gratis y legal en todo el mundo.',u:'https://filmzie.com/home',c:'#0f4c5c'},
+ {n:'Samsung TV Plus',d:'Canales gratis que vienen en los televisores Samsung. En la tele, abrí la app Samsung TV Plus.',u:'https://www.samsungtvplus.com',c:'#1428a0'},
+ {n:'Medios Públicos Uruguay',d:'Canal 5 (TNU) y la radio pública uruguaya en vivo, gratis.',u:'https://mediospublicos.uy',c:'#0b6e4f'},
+ {n:'YouTube Películas',d:'YouTube tiene algunas películas gratis con anuncios. Muchas son de pago: fijate que diga "Gratis".',u:'https://www.youtube.com/feed/storefront',c:'#b00000'}
+];
 const SECTIONS=[
- {id:'peliculas',name:'🎬 Películas',q:'collection:feature_films',info:'Películas clásicas de dominio público.'},
+ {id:'tv',name:'📡 TV en vivo',tv:1,sq:1,info:'Canales oficiales que transmiten gratis por internet. Los canales de Sony One pasan películas todo el día, en francés.'},
+ {id:'apps',name:'🍿 Cine gratis (apps)',apps:1,info:'Para películas más nuevas: plataformas legales y gratis que se pagan con publicidad. Se abren en su propia página o app.'},
+ {id:'favoritos',name:'⭐ Mis favoritos',fav:1,info:'Lo que marcaste con la estrella. Se guarda en este dispositivo.'},
+ {id:'peliculas',name:'🎬 Películas clásicas',q:'collection:feature_films',info:'Películas clásicas de dominio público.'},
+ {id:'espanol',name:'🗣️ Cine en español',q:'(collection:feature_films OR collection:moviesandfilms) AND language:(spa OR Spanish OR español OR Español)',info:'Películas habladas en español.'},
+ {id:'comedia',name:'😂 Comedia',q:'collection:Comedy_Films',info:'Comedias clásicas.'},
+ {id:'noir',name:'🕵️ Cine negro y policial',q:'collection:Film_Noir',info:'Policiales y cine negro.'},
+ {id:'western',name:'🤠 Westerns',q:'collection:feature_films AND subject:(western OR westerns)',info:'Películas del Lejano Oeste.'},
+ {id:'mudo',name:'🎩 Cine mudo',q:'collection:silent_films',info:'Chaplin, Keaton y el cine mudo.'},
  {id:'terror',name:'👻 Terror y Ciencia ficción',q:'collection:SciFi_Horror',info:'Clásicos de terror y ciencia ficción.'},
  {id:'dibujos',name:'🧸 Dibujos animados',q:'collection:classic_cartoons',info:'Dibujos animados clásicos.'},
  {id:'series',name:'📺 Series de TV',q:'collection:classic_tv',info:'Episodios de televisión clásica.'},
@@ -109,15 +139,75 @@ $('sform').onsubmit=e=>{e.preventDefault();query=$('q').value.trim();load(true)}
 $('es').onchange=()=>load(true);
 more.onclick=()=>{page++;load(false)};
 
+let loadId=0;
 async function load(reset){
+  const my=++loadId;
   if(reset){page=1;grid.innerHTML='';renderTabs()}
   try{localStorage.setItem('cml',cur.id)}catch(e){}
   grid.className='grid'+(cur.sq?' sq':'');
   $('info').textContent=cur.info;
   more.hidden=true;
   if(reset)grid.innerHTML='<div class="empty">Cargando…</div>';
-  try{ cur.radio?await loadRadio(reset):await loadArchive(reset) }
+  try{
+    if(cur.tv)loadTV();else if(cur.apps)loadApps();else if(cur.fav)loadFav();
+    else if(cur.radio)await loadRadio(reset);else await loadArchive(reset) }
   catch(err){grid.innerHTML='<div class="empty">No se pudo cargar. Revisá tu conexión e intentá de nuevo.</div>'}
+}
+
+const FALLBACK_IMG="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'><rect fill='%23243045' width='1' height='1'/></svg>";
+function match(t){return !query||t.toLowerCase().includes(query.toLowerCase())}
+function loadTV(){
+  const list=TV.filter(c=>match(c.n+' '+c.g));
+  if(!list.length){grid.innerHTML='<div class="empty">No hay canales con ese nombre.</div>';return}
+  grid.innerHTML=list.map(c=>`<div class="card" tabindex="0" data-live="${esc(c.u)}" data-t="${esc(c.n)}" data-img="${esc(c.logo)}">
+    <img class="logo" loading="lazy" src="${esc(c.logo)}" alt="" onerror="this.src=FALLBACK_IMG">
+    <div class="t">${esc(c.n)}</div><div class="s"><span class="live">EN VIVO</span> ${esc(c.g)}</div></div>`).join('');
+}
+function loadApps(){
+  grid.className='grid apps';
+  grid.innerHTML=APPS.filter(a=>match(a.n+' '+a.d)).map(a=>`<a class="card app" href="${esc(a.u)}" target="_blank" rel="noopener" style="--c:${a.c}">
+    <div class="an">${esc(a.n)}</div><div class="s">${esc(a.d)}</div><div class="go">Abrir ↗</div></a>`).join('');
+}
+function getFav(){try{return JSON.parse(localStorage.getItem('cml-fav')||'[]')}catch(e){return []}}
+function setFav(f){try{localStorage.setItem('cml-fav',JSON.stringify(f))}catch(e){}}
+function favKey(c){return c.dataset.id||c.dataset.live||c.dataset.radio}
+function loadFav(){
+  const f=getFav().filter(x=>match(x.t));
+  if(!f.length){grid.innerHTML='<div class="empty">Todavía no tenés favoritos. Abrí una película, canal o disco y tocá ☆ Favorito.</div>';return}
+  grid.innerHTML=f.map(x=>`<div class="card" tabindex="0" ${x.attr}="${esc(x.k)}" data-t="${esc(x.t)}" data-img="${esc(x.img)}" data-sq="${x.sq?1:''}">
+    <img ${x.attr==='data-live'?'class="logo"':''} loading="lazy" src="${esc(x.img)}" alt="" onerror="this.src=FALLBACK_IMG"><div class="t">${esc(x.t)}</div></div>`).join('');
+}
+let lastCard=null;
+function favButton(){
+  const c=lastCard;if(!c)return '';
+  const on=getFav().some(x=>x.k===favKey(c));
+  return `<button id="favbtn" class="${on?'on':''}">${on?'★ En favoritos':'☆ Favorito'}</button>`;
+}
+document.addEventListener('click',e=>{
+  if(e.target.id!=='favbtn'||!lastCard)return;
+  const c=lastCard,k=favKey(c);let f=getFav();
+  if(f.some(x=>x.k===k))f=f.filter(x=>x.k!==k);
+  else f.unshift({k,t:c.dataset.t,attr:c.dataset.id?'data-id':c.dataset.live?'data-live':'data-radio',
+    img:c.dataset.img||(c.dataset.id?'https://archive.org/services/img/'+encodeURIComponent(c.dataset.id):''),sq:c.dataset.sq||(cur.sq?1:'')});
+  setFav(f);e.target.outerHTML=favButton();
+});
+
+let hls=null;
+function hint(){return $('lhint')||{}}
+function playLive(c){
+  $('ptitle').textContent=c.dataset.t;
+  $('pfav').innerHTML=favButton();
+  $('pbody').innerHTML='<video id="pv" controls autoplay playsinline></video><div class="hint" id="lhint">Conectando con el canal…</div>';
+  $('player').classList.add('open');$('pclose').focus();
+  const v=$('pv'),u=c.dataset.live;
+  const fail=()=>{hint().textContent='Este canal no está transmitiendo ahora o no está disponible en tu país. Probá otro.'};
+  v.onplaying=()=>{hint().textContent=''};
+  if(window.Hls&&Hls.isSupported()){
+    hls=new Hls();hls.loadSource(u);hls.attachMedia(v);
+    hls.on(Hls.Events.MANIFEST_PARSED,()=>v.play().catch(()=>{hint().textContent='Tocá ▶ para empezar.'}));
+    hls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal)fail()});
+  }else if(v.canPlayType('application/vnd.apple.mpegurl')){v.src=u;v.onerror=fail;v.play().catch(()=>{})}
+  else fail();
 }
 
 async function loadArchive(reset){
@@ -127,7 +217,8 @@ async function loadArchive(reset){
   const rows=48;
   const url='https://archive.org/advancedsearch.php?q='+encodeURIComponent(q)+
     '&fl[]=identifier&fl[]=title&fl[]=year&fl[]=creator&sort[]=downloads+desc&rows='+rows+'&page='+page+'&output=json';
-  const r=await fetch(url);const d=await r.json();
+  const my=loadId;const r=await fetch(url);const d=await r.json();
+  if(my!==loadId)return;
   const docs=d.response.docs;
   if(reset)grid.innerHTML='';
   if(!docs.length&&reset){grid.innerHTML='<div class="empty">No hay resultados.</div>';return}
@@ -141,12 +232,14 @@ async function loadArchive(reset){
 
 const RADIO_HOSTS=['de1.api.radio-browser.info','fi1.api.radio-browser.info','de2.api.radio-browser.info'];
 async function loadRadio(reset){
+  const my=loadId;
   const p=new URLSearchParams({hidebroken:'true',order:'clickcount',reverse:'true',limit:'60',offset:String((page-1)*60),is_https:'true'});
   if(query)p.set('name',query);else p.set('countrycode','UY');
   if($('es').checked)p.set('language','spanish');
   let data;
   for(const h of RADIO_HOSTS){try{const r=await fetch(`https://${h}/json/stations/search?`+p);if(r.ok){data=await r.json();break}}catch(e){}}
   if(!data)throw new Error('radio');
+  if(my!==loadId)return;
   data=data.filter(s=>s.url_resolved&&s.url_resolved.startsWith('https'));
   if(reset)grid.innerHTML='';
   if(!data.length&&reset){grid.innerHTML='<div class="empty">No se encontraron radios.</div>';return}
@@ -157,9 +250,13 @@ async function loadRadio(reset){
 }
 
 async function openCard(c){
+  lastCard=c;
   if(c.dataset.radio){playRadio(c);return}
+  if(c.dataset.live){playLive(c);return}
   const id=c.dataset.id;
+  const isAudio=cur.fav?!!c.dataset.sq:!!cur.sq;
   $('ptitle').textContent=c.dataset.t;
+  $('pfav').innerHTML=favButton();
   $('pbody').innerHTML='<div class="empty">Cargando…</div>';
   $('player').classList.add('open');$('pclose').focus();
   try{
@@ -172,7 +269,7 @@ async function openCard(c){
     const names=new Set(vids.map(f=>f.name));
     vids=vids.filter(f=>!(/_512kb\.mp4$/i.test(f.name)&&names.has(f.name.replace(/_512kb\.mp4$/i,'.mp4')))).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
     const auds=files.filter(f=>/\.mp3$/i.test(f.name)&&!/64kb/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
-    if(!cur.sq&&vids.length){
+    if(!isAudio&&vids.length){
       $('pbody').innerHTML=`<video id="pv" controls autoplay playsinline src="${base+encodeURI(vids[0].name)}"></video>`+
         (vids.length>1?`<div class="tracks">${vids.map((f,i)=>`<button data-src="${base+encodeURI(f.name)}" class="${i?'':'on'}">${esc(f.title||f.name.replace(/\.mp4$/i,''))}</button>`).join('')}</div>`:'');
     }else if(auds.length){
@@ -187,16 +284,17 @@ async function openCard(c){
 $('pbody').onclick=e=>{const b=e.target.closest('.tracks button');if(!b)return;
   $('pbody').querySelectorAll('.tracks .on').forEach(x=>x.classList.remove('on'));b.classList.add('on');
   const v=$('pv');v.src=b.dataset.src;v.play().catch(()=>{})};
-function closePlayer(){$('player').classList.remove('open');$('pbody').innerHTML=''}
+function closePlayer(){if(hls){hls.destroy();hls=null}$('player').classList.remove('open');$('pbody').innerHTML='';
+  if(cur.fav)loadFav();if(lastCard&&document.body.contains(lastCard))lastCard.focus()}
 $('pclose').onclick=closePlayer;
-grid.onclick=e=>{const c=e.target.closest('.card');if(c)openCard(c)};
+grid.onclick=e=>{const c=e.target.closest('.card');if(c&&!c.classList.contains('app'))openCard(c)};
 
 const audio=$('raudio');
 function playRadio(c){
   closePlayer();
   audio.src=c.dataset.radio;audio.play().catch(()=>{});
   $('rname').textContent=c.dataset.t;$('rimg').src=c.dataset.img||'';
-  $('radiobar').classList.add('open');$('rtoggle').textContent='⏸ Pausa';
+  $('radiobar').classList.add('open');$('rtoggle').textContent='⏸ Pausa';$('rfav').innerHTML=favButton();
 }
 $('rtoggle').onclick=()=>{if(audio.paused){audio.play();$('rtoggle').textContent='⏸ Pausa'}else{audio.pause();$('rtoggle').textContent='▶ Seguir'}};
 $('rstop').onclick=()=>{audio.pause();audio.src='';$('radiobar').classList.remove('open')};
@@ -206,11 +304,11 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'||e.key==='Backspace'&&document.activeElement.tagName!=='INPUT'){
     if($('player').classList.contains('open')){e.preventDefault();closePlayer();return}}
   if(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='checkbox')return;
-  if(e.key==='Enter'&&document.activeElement.classList.contains('card')){openCard(document.activeElement);return}
+  if(e.key==='Enter'&&document.activeElement.classList.contains('card')&&!document.activeElement.classList.contains('app')){openCard(document.activeElement);return}
   const dirs={ArrowRight:[1,0],ArrowLeft:[-1,0],ArrowDown:[0,1],ArrowUp:[0,-1]};
   const d=dirs[e.key];if(!d)return;
   const scope=$('player').classList.contains('open')?$('player'):document;
-  const els=[...scope.querySelectorAll('button:not([hidden]),.card,input')].filter(el=>el.offsetParent!==null);
+  const els=[...scope.querySelectorAll('button:not([hidden]),.card,input,video')].filter(el=>el.offsetParent!==null);
   const a=document.activeElement;
   if(!els.includes(a)){els[0]?.focus();e.preventDefault();return}
   const r=a.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
