@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Centro Multimedia Libre</title>
+<style>
+:root{--bg:#0b0d12;--panel:#151922;--panel2:#1d2330;--text:#eef1f6;--muted:#9aa3b2;--accent:#3b82f6;--focus:#fbbf24}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:rgba(11,13,18,.95);backdrop-filter:blur(8px);padding:12px 16px;border-bottom:1px solid #222a38}
+.top{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+h1{font-size:20px;margin:0 8px 0 0;white-space:nowrap}
+h1 span{color:var(--accent)}
+.search{flex:1;min-width:180px;display:flex;gap:8px}
+input[type=search]{flex:1;background:var(--panel2);border:1px solid #2c3445;color:var(--text);border-radius:10px;padding:10px 14px;font-size:16px}
+nav{display:flex;gap:8px;overflow-x:auto;margin-top:10px;padding-bottom:4px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+button,.chip{background:var(--panel2);color:var(--text);border:1px solid #2c3445;border-radius:999px;padding:9px 16px;font-size:15px;cursor:pointer;white-space:nowrap}
+button.on{background:var(--accent);border-color:var(--accent)}
+label.chip{display:flex;align-items:center;gap:6px}
+:focus-visible,.card:focus{outline:3px solid var(--focus);outline-offset:2px}
+main{padding:16px;max-width:1600px;margin:0 auto}
+.info{color:var(--muted);margin:0 0 14px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+@media(min-width:1200px){.grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}}
+.card{background:var(--panel);border-radius:12px;overflow:hidden;cursor:pointer;border:1px solid #1f2633;transition:transform .12s}
+.card:hover,.card:focus{transform:scale(1.04)}
+.card img{width:100%;aspect-ratio:3/4;object-fit:cover;background:#222;display:block}
+.grid.sq .card img{aspect-ratio:1}
+.card .t{padding:8px 10px;font-size:14px;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .s{padding:0 10px 10px;font-size:12px;color:var(--muted)}
+.more{display:block;margin:20px auto}
+#player{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:20;display:none;flex-direction:column;padding:12px}
+#player.open{display:flex}
+#player .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+#player h2{margin:0;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pbody{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0;align-items:center}
+#pbody video{width:100%;flex:1;min-height:0;background:#000;border-radius:10px}
+#pbody iframe{flex:1;width:100%;border:0;border-radius:10px;background:#000}
+#pbody audio{width:min(700px,100%)}
+#pbody .cover{max-height:35vh;max-width:80%;border-radius:12px}
+.tracks{width:min(700px,100%);overflow-y:auto;display:flex;flex-direction:column;gap:6px;max-height:35vh}
+.tracks button{border-radius:10px;text-align:left;white-space:normal}
+#pbody video+.tracks{max-height:20vh}
+#radiobar{position:fixed;left:0;right:0;bottom:0;background:var(--panel2);border-top:1px solid #2c3445;padding:10px 16px;display:none;align-items:center;gap:12px;z-index:10}
+#radiobar.open{display:flex}
+#radiobar img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#333}
+#radiobar .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.empty{color:var(--muted);text-align:center;padding:40px}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:30px 16px 90px}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>▶ Centro <span>Libre</span></h1>
+    <form class="search" id="sform">
+      <input type="search" id="q" placeholder="Buscar en esta sección…" aria-label="Buscar">
+      <button type="submit">Buscar</button>
+    </form>
+    <label class="chip"><input type="checkbox" id="es"> Solo en español</label>
+  </div>
+  <nav id="tabs"></nav>
+</header>
+<main>
+  <p class="info" id="info"></p>
+  <div class="grid" id="grid"></div>
+  <button class="more" id="more" hidden>Cargar más</button>
+</main>
+<div id="player" role="dialog" aria-modal="true">
+  <div class="bar"><h2 id="ptitle"></h2><button id="pclose">✕ Cerrar</button></div>
+  <div id="pbody"></div>
+</div>
+<div id="radiobar">
+  <img id="rimg" alt=""><div class="n" id="rname"></div>
+  <button id="rtoggle">⏸ Pausa</button><button id="rstop">✕</button>
+  <audio id="raudio"></audio>
+</div>
+<footer>Todo el contenido es legal y gratuito: dominio público y licencias libres de
+<a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a>,
+<a href="https://librivox.org" target="_blank" rel="noopener">LibriVox</a> y radios de
+<a href="https://www.radio-browser.info" target="_blank" rel="noopener">Radio Browser</a>.</footer>
+<script>
+const SECTIONS=[
+ {id:'peliculas',name:'🎬 Películas',q:'collection:feature_films',info:'Películas clásicas de dominio público.'},
+ {id:'terror',name:'👻 Terror y Ciencia ficción',q:'collection:SciFi_Horror',info:'Clásicos de terror y ciencia ficción.'},
+ {id:'dibujos',name:'🧸 Dibujos animados',q:'collection:classic_cartoons',info:'Dibujos animados clásicos.'},
+ {id:'series',name:'📺 Series de TV',q:'collection:classic_tv',info:'Episodios de televisión clásica.'},
+ {id:'historia',name:'🎞️ Archivo histórico',q:'collection:prelinger',info:'Películas documentales e históricas del archivo Prelinger.'},
+ {id:'musica',name:'🎵 Música libre',q:'collection:netlabels',sq:1,info:'Discos con licencia libre de sellos independientes.'},
+ {id:'conciertos',name:'🎸 Conciertos en vivo',q:'collection:etree',sq:1,info:'Grabaciones de conciertos con permiso de los artistas.'},
+ {id:'audiolibros',name:'📚 Audiolibros',q:'collection:librivoxaudio',sq:1,info:'Audiolibros de LibriVox leídos por voluntarios.'},
+ {id:'radio',name:'📻 Radios',radio:1,sq:1,info:'Radios en vivo. Por defecto: Uruguay. Buscá cualquier radio del mundo por nombre.'}
+];
+let cur=SECTIONS[0],page=1,query='';
+const $=id=>document.getElementById(id);
+const grid=$('grid'),more=$('more');
+
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+function renderTabs(){
+  $('tabs').innerHTML=SECTIONS.map(s=>`<button data-id="${s.id}" class="${s===cur?'on':''}">${s.name}</button>`).join('');
+}
+$('tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  cur=SECTIONS.find(s=>s.id===b.dataset.id);query='';$('q').value='';load(true)};
+$('sform').onsubmit=e=>{e.preventDefault();query=$('q').value.trim();load(true)};
+$('es').onchange=()=>load(true);
+more.onclick=()=>{page++;load(false)};
+
+async function load(reset){
+  if(reset){page=1;grid.innerHTML='';renderTabs()}
+  try{localStorage.setItem('cml',cur.id)}catch(e){}
+  grid.className='grid'+(cur.sq?' sq':'');
+  $('info').textContent=cur.info;
+  more.hidden=true;
+  if(reset)grid.innerHTML='<div class="empty">Cargando…</div>';
+  try{ cur.radio?await loadRadio(reset):await loadArchive(reset) }
+  catch(err){grid.innerHTML='<div class="empty">No se pudo cargar. Revisá tu conexión e intentá de nuevo.</div>'}
+}
+
+async function loadArchive(reset){
+  let q=cur.q+' AND mediatype:'+(cur.sq?'audio':'movies')+' AND -access-restricted-item:true';
+  if(query)q+=` AND (${query})`;
+  if($('es').checked)q+=' AND language:(spa OR Spanish OR español OR Español)';
+  const rows=48;
+  const url='https://archive.org/advancedsearch.php?q='+encodeURIComponent(q)+
+    '&fl[]=identifier&fl[]=title&fl[]=year&fl[]=creator&sort[]=downloads+desc&rows='+rows+'&page='+page+'&output=json';
+  const r=await fetch(url);const d=await r.json();
+  const docs=d.response.docs;
+  if(reset)grid.innerHTML='';
+  if(!docs.length&&reset){grid.innerHTML='<div class="empty">No hay resultados.</div>';return}
+  grid.insertAdjacentHTML('beforeend',docs.map(x=>{
+    const sub=[x.year,Array.isArray(x.creator)?x.creator[0]:x.creator].filter(Boolean).join(' · ');
+    return `<div class="card" tabindex="0" data-id="${esc(x.identifier)}" data-t="${esc(x.title)}">
+      <img loading="lazy" src="https://archive.org/services/img/${encodeURIComponent(x.identifier)}" alt="">
+      <div class="t">${esc(x.title)}</div><div class="s">${esc(sub)}</div></div>`}).join(''));
+  more.hidden=page*rows>=d.response.numFound;
+}
+
+const RADIO_HOSTS=['de1.api.radio-browser.info','fi1.api.radio-browser.info','de2.api.radio-browser.info'];
+async function loadRadio(reset){
+  const p=new URLSearchParams({hidebroken:'true',order:'clickcount',reverse:'true',limit:'60',offset:String((page-1)*60),is_https:'true'});
+  if(query)p.set('name',query);else p.set('countrycode','UY');
+  if($('es').checked)p.set('language','spanish');
+  let data;
+  for(const h of RADIO_HOSTS){try{const r=await fetch(`https://${h}/json/stations/search?`+p);if(r.ok){data=await r.json();break}}catch(e){}}
+  if(!data)throw new Error('radio');
+  data=data.filter(s=>s.url_resolved&&s.url_resolved.startsWith('https'));
+  if(reset)grid.innerHTML='';
+  if(!data.length&&reset){grid.innerHTML='<div class="empty">No se encontraron radios.</div>';return}
+  grid.insertAdjacentHTML('beforeend',data.map(s=>`<div class="card" tabindex="0" data-radio="${esc(s.url_resolved)}" data-t="${esc(s.name.trim())}" data-img="${esc(s.favicon)}">
+    <img loading="lazy" src="${esc(s.favicon)||''}" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><rect fill=%22%23243%22 width=%221%22 height=%221%22/></svg>'">
+    <div class="t">${esc(s.name.trim())}</div><div class="s">${esc([s.state,s.country].filter(Boolean).join(', '))}</div></div>`).join(''));
+  more.hidden=data.length<50;
+}
+
+async function openCard(c){
+  if(c.dataset.radio){playRadio(c);return}
+  const id=c.dataset.id;
+  $('ptitle').textContent=c.dataset.t;
+  $('pbody').innerHTML='<div class="empty">Cargando…</div>';
+  $('player').classList.add('open');$('pclose').focus();
+  try{
+    const m=await (await fetch('https://archive.org/metadata/'+encodeURIComponent(id))).json();
+    const base='https://archive.org/download/'+encodeURIComponent(id)+'/';
+    const files=(m.files||[]).filter(f=>!/thumb|sample/i.test(f.name));
+    let vids=files.filter(f=>/\.mp4$/i.test(f.name));
+    const dup=new Set(vids.map(f=>f.original).filter(Boolean)); // evitar el mismo video dos veces (original + copia)
+    vids=vids.filter(f=>!dup.has(f.name));
+    const names=new Set(vids.map(f=>f.name));
+    vids=vids.filter(f=>!(/_512kb\.mp4$/i.test(f.name)&&names.has(f.name.replace(/_512kb\.mp4$/i,'.mp4')))).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+    const auds=files.filter(f=>/\.mp3$/i.test(f.name)&&!/64kb/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+    if(!cur.sq&&vids.length){
+      $('pbody').innerHTML=`<video id="pv" controls autoplay playsinline src="${base+encodeURI(vids[0].name)}"></video>`+
+        (vids.length>1?`<div class="tracks">${vids.map((f,i)=>`<button data-src="${base+encodeURI(f.name)}" class="${i?'':'on'}">${esc(f.title||f.name.replace(/\.mp4$/i,''))}</button>`).join('')}</div>`:'');
+    }else if(auds.length){
+      $('pbody').innerHTML=`<img class="cover" src="https://archive.org/services/img/${encodeURIComponent(id)}" alt=""><audio id="pv" controls autoplay src="${base+encodeURI(auds[0].name)}"></audio>`+
+        `<div class="tracks">${auds.map((f,i)=>`<button data-src="${base+encodeURI(f.name)}" class="${i?'':'on'}">${i+1}. ${esc(f.title||f.name.replace(/\.mp3$/i,''))}</button>`).join('')}</div>`;
+      $('pv').onended=()=>{const on=$('pbody').querySelector('.tracks .on');const nx=on&&on.nextElementSibling;if(nx)nx.click()};
+    }else{
+      $('pbody').innerHTML=`<iframe src="https://archive.org/embed/${encodeURIComponent(id)}?playlist=1" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+    }
+  }catch(e){$('pbody').innerHTML='<div class="empty">No se pudo abrir. Probá otro título.</div>'}
+}
+$('pbody').onclick=e=>{const b=e.target.closest('.tracks button');if(!b)return;
+  $('pbody').querySelectorAll('.tracks .on').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  const v=$('pv');v.src=b.dataset.src;v.play().catch(()=>{})};
+function closePlayer(){$('player').classList.remove('open');$('pbody').innerHTML=''}
+$('pclose').onclick=closePlayer;
+grid.onclick=e=>{const c=e.target.closest('.card');if(c)openCard(c)};
+
+const audio=$('raudio');
+function playRadio(c){
+  closePlayer();
+  audio.src=c.dataset.radio;audio.play().catch(()=>{});
+  $('rname').textContent=c.dataset.t;$('rimg').src=c.dataset.img||'';
+  $('radiobar').classList.add('open');$('rtoggle').textContent='⏸ Pausa';
+}
+$('rtoggle').onclick=()=>{if(audio.paused){audio.play();$('rtoggle').textContent='⏸ Pausa'}else{audio.pause();$('rtoggle').textContent='▶ Seguir'}};
+$('rstop').onclick=()=>{audio.pause();audio.src='';$('radiobar').classList.remove('open')};
+
+// Navegación con control remoto / flechas
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'||e.key==='Backspace'&&document.activeElement.tagName!=='INPUT'){
+    if($('player').classList.contains('open')){e.preventDefault();closePlayer();return}}
+  if(document.activeElement.tagName==='INPUT'&&document.activeElement.type!=='checkbox')return;
+  if(e.key==='Enter'&&document.activeElement.classList.contains('card')){openCard(document.activeElement);return}
+  const dirs={ArrowRight:[1,0],ArrowLeft:[-1,0],ArrowDown:[0,1],ArrowUp:[0,-1]};
+  const d=dirs[e.key];if(!d)return;
+  const scope=$('player').classList.contains('open')?$('player'):document;
+  const els=[...scope.querySelectorAll('button:not([hidden]),.card,input')].filter(el=>el.offsetParent!==null);
+  const a=document.activeElement;
+  if(!els.includes(a)){els[0]?.focus();e.preventDefault();return}
+  const r=a.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  let best=null,bs=Infinity;
+  for(const el of els){if(el===a)continue;const b=el.getBoundingClientRect();
+    const dx=b.left+b.width/2-cx,dy=b.top+b.height/2-cy;
+    const main=dx*d[0]+dy*d[1];if(main<=2)continue;
+    const side=Math.abs(d[0]?dy:dx);const sc=main+side*2.5;
+    if(sc<bs){bs=sc;best=el}}
+  if(best){e.preventDefault();best.focus();best.scrollIntoView({block:'nearest',behavior:'smooth'})}
+});
+
+try{const saved=localStorage.getItem('cml');const s=SECTIONS.find(x=>x.id===saved);if(s)cur=s}catch(e){}
+load(true);
+</script>
+</body>
+</html>
